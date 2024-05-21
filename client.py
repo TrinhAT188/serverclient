@@ -1,26 +1,23 @@
-#client
 import socket
 import pickle
 import psutil
 import time
-import platform
+
 
 def get_running_processes():
     running_processes = []
-    for process in psutil.process_iter(['pid', 'ppid', 'name', 'username', 'status']):
+    for process in psutil.process_iter(['pid', 'name', 'ppid', 'username', 'status']):
         # Bỏ qua các tiến trình hệ thống và các tiến trình không có tên người dùng
-        if process.info['username'] is not None and process.info['username'] != 'SYSTEM':
+        if process.info['username'] is not None and not process.info['username'].endswith('SYSTEM'):
             running_processes.append({
                 'pid': process.info['pid'],
-                'ppid': process.info['ppid'],
                 'name': process.info['name'],
+                'ppid': process.info['ppid'],  # Thêm PID của tiến trình cha
                 'username': process.info['username'],
-                'status': process.info['status'],
-                'os' : platform.system(),
-                'version' : platform.release(),
+                'status': process.info['status']
             })
-            
     return running_processes
+
 
 def send_running_processes(host, port):
     while True:  # Vòng lặp vô hạn để gửi thông tin định kỳ
@@ -33,9 +30,11 @@ def send_running_processes(host, port):
                 print("Sent running processes to server")
             except Exception as e:
                 print(f"Error: {e}")
-        time.sleep(0)  # Đợi 5 giây trước khi gửi lại
+                break
+        time.sleep(8)  # Đợi 7 giây trước khi gửi lại
+
 
 if __name__ == "__main__":
-    SERVER_HOST = '192.168.60.130'
+    SERVER_HOST = '172.16.1.98'
     SERVER_PORT = 12345
     send_running_processes(SERVER_HOST, SERVER_PORT)
